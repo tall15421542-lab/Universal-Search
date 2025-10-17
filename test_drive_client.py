@@ -18,7 +18,7 @@ class TestDriveClient:
     
     def setup_method(self):
         """Set up test fixtures before each test method."""
-        self.test_tokens_file = "tokens.json"
+        self.test_credentials_file = "credentials.json"
         self.test_credentials = {
             "web": {
                 "client_id": "test-client-id",
@@ -61,7 +61,7 @@ class TestDriveClient:
         }
 
     def test_load_credentials_from_file_success(self):
-        """Test successful loading of credentials from tokens.json file."""
+        """Test successful loading of credentials from credentials.json file."""
         with patch("builtins.open", mock_open(read_data=json.dumps(self.test_credentials))):
             with patch("json.load") as mock_json_load:
                 mock_json_load.return_value = self.test_credentials
@@ -76,17 +76,17 @@ class TestDriveClient:
                 mock_json_load.assert_called_once()
 
     def test_load_credentials_file_not_found(self):
-        """Test handling when tokens.json file is not found."""
+        """Test handling when credentials.json file is not found."""
         with patch("builtins.open", side_effect=FileNotFoundError("File not found")):
             from drive_client import DriveClient
             
             client = DriveClient()
             
-            with pytest.raises(FileNotFoundError, match="tokens.json file not found"):
+            with pytest.raises(FileNotFoundError, match="credentials.json file not found"):
                 client._load_credentials()
 
     def test_load_credentials_invalid_json(self):
-        """Test handling of invalid JSON in tokens.json file."""
+        """Test handling of invalid JSON in credentials.json file."""
         with patch("builtins.open", mock_open(read_data="invalid json")):
             with patch("json.load", side_effect=json.JSONDecodeError("Invalid JSON", "", 0)):
                 from drive_client import DriveClient
@@ -132,15 +132,17 @@ class TestDriveClient:
         with pytest.raises(ValueError, match="Missing required credential fields"):
             client._validate_credentials_structure(incomplete_credentials)
 
-    @patch('google_auth_oauthlib.flow.Flow.from_client_config')
-    @patch('google_auth_oauthlib.flow.Flow.run_local_server')
-    def test_authenticate_success(self, mock_run_local_server, mock_from_client_config):
+    @patch('os.path.exists')
+    @patch('google_auth_oauthlib.flow.InstalledAppFlow.from_client_config')
+    def test_authenticate_success(self, mock_from_client_config, mock_exists):
         """Test successful OAuth authentication flow."""
         # Mock the flow and credentials
         mock_flow = Mock()
         mock_credentials = Mock()
+        mock_credentials.to_json.return_value = '{"token": "test"}'
         mock_flow.run_local_server.return_value = mock_credentials
         mock_from_client_config.return_value = mock_flow
+        mock_exists.return_value = False  # No existing token
         
         from drive_client import DriveClient
         
@@ -150,9 +152,9 @@ class TestDriveClient:
         
         assert credentials == mock_credentials
         mock_from_client_config.assert_called_once()
-        mock_run_local_server.assert_called_once_with(port=8080)
+        mock_flow.run_local_server.assert_called_once_with(port=8080)
 
-    @patch('google_auth_oauthlib.flow.Flow.from_client_config')
+    @patch('google_auth_oauthlib.flow.InstalledAppFlow.from_client_config')
     def test_authenticate_invalid_credentials(self, mock_from_client_config):
         """Test authentication failure with invalid credentials."""
         mock_from_client_config.side_effect = Exception("Invalid credentials")
@@ -268,29 +270,35 @@ class TestDriveClient:
 
     def test_get_drive_service_success(self):
         """Test successful creation of Google Drive service."""
-        with patch('googleapiclient.discovery.build') as mock_build:
+        with patch('drive_client.build') as mock_build:
             mock_service = Mock()
             mock_build.return_value = mock_service
+            
+            # Create a mock credentials object
+            mock_credentials = Mock()
             
             from drive_client import DriveClient
             
             client = DriveClient()
-            service = client.get_drive_service(self.test_token_data)
+            service = client.get_drive_service(mock_credentials)
             
             assert service == mock_service
             mock_build.assert_called_once_with(
-                'drive', 'v3', credentials=self.test_token_data
+                'drive', 'v3', credentials=mock_credentials
             )
 
     def test_get_drive_service_build_error(self):
         """Test handling of service build errors."""
-        with patch('googleapiclient.discovery.build', side_effect=Exception("Build error")):
+        with patch('drive_client.build', side_effect=Exception("Build error")):
             from drive_client import DriveClient
+            
+            # Create a mock credentials object
+            mock_credentials = Mock()
             
             client = DriveClient()
             
             with pytest.raises(Exception, match="Failed to create Drive service"):
-                client.get_drive_service(self.test_token_data)
+                client.get_drive_service(mock_credentials)
 
     def test_main_function_success(self):
         """Test successful execution of main function."""
@@ -303,7 +311,7 @@ class TestDriveClient:
             mock_files = [{"name": "test.txt"}]
             
             mock_client._load_credentials.return_value = mock_credentials
-            mock_client.authenticate.return_value = self.test_token_data
+            mock_client.authenticate.return_value = Mock()  # Mock credentials object
             mock_client.get_drive_service.return_value = mock_service
             mock_client.list_files.return_value = mock_files
             
@@ -318,7 +326,8 @@ class TestDriveClient:
             mock_client = Mock()
             mock_client_class.return_value = mock_client
             
-            mock_client._load_credentials.side_effect = FileNotFoundError("File not found")
+            # Make the client.main() method raise FileNotFoundError
+            mock_client.main.side_effect = FileNotFoundError("File not found")
             
             from drive_client import main
             
