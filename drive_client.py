@@ -88,41 +88,54 @@ class DriveClient:
             # Validate credentials structure
             self._validate_credentials_structure(credentials_config)
             
-            # Check if we have existing valid credentials
+            # Check if token.json exists
             if os.path.exists('token.json'):
+                # Load credentials from token.json
                 try:
                     self.credentials = Credentials.from_authorized_user_file('token.json', [self.SCOPE])
-                except (ValueError, json.JSONDecodeError):
-                    # Invalid token file, remove it and start fresh
-                    os.remove('token.json')
-                    self.credentials = None
-            
-            # If there are no (valid) credentials available, let the user log in
-            if not self.credentials or not self.credentials.valid:
-                if self.credentials and self.credentials.expired and self.credentials.refresh_token:
-                    self.credentials.refresh(Request())
-                else:
-                    # Convert web credentials to installed format for InstalledAppFlow
-                    installed_credentials = {
-                        "installed": {
-                            "client_id": credentials_config["web"]["client_id"],
-                            "client_secret": credentials_config["web"]["client_secret"],
-                            "auth_uri": credentials_config["web"]["auth_uri"],
-                            "token_uri": credentials_config["web"]["token_uri"],
-                            "auth_provider_x509_cert_url": credentials_config["web"]["auth_provider_x509_cert_url"],
-                            "redirect_uris": credentials_config["web"]["redirect_uris"]
-                        }
-                    }
                     
-                    # Create OAuth2 flow using InstalledAppFlow
-                    flow = InstalledAppFlow.from_client_config(
-                        installed_credentials, [self.SCOPE]
-                    )
-                    self.credentials = flow.run_local_server(port=8080)
-                
-                # Save the credentials for the next run
-                with open('token.json', 'w') as token:
-                    token.write(self.credentials.to_json())
+                    # Check if credentials are valid
+                    if self.credentials.valid:
+                        return self.credentials
+                    
+                    # If invalid, try to refresh
+                    if self.credentials.expired and self.credentials.refresh_token:
+                        try:
+                            self.credentials.refresh(Request())
+                            # If refresh successful, save and return
+                            with open('token.json', 'w') as token:
+                                token.write(self.credentials.to_json())
+                            return self.credentials
+                        except Exception:
+                            # Refresh failed, will fall back to installed credentials
+                            pass
+                    
+                except (ValueError, json.JSONDecodeError):
+                    # Invalid token file, will fall back to installed credentials
+                    pass
+            
+            # Fall back to installed credentials and write to token.json
+            # Convert web credentials to installed format for InstalledAppFlow
+            installed_credentials = {
+                "installed": {
+                    "client_id": credentials_config["web"]["client_id"],
+                    "client_secret": credentials_config["web"]["client_secret"],
+                    "auth_uri": credentials_config["web"]["auth_uri"],
+                    "token_uri": credentials_config["web"]["token_uri"],
+                    "auth_provider_x509_cert_url": credentials_config["web"]["auth_provider_x509_cert_url"],
+                    "redirect_uris": credentials_config["web"]["redirect_uris"]
+                }
+            }
+            
+            # Create OAuth2 flow using InstalledAppFlow
+            flow = InstalledAppFlow.from_client_config(
+                installed_credentials, [self.SCOPE]
+            )
+            self.credentials = flow.run_local_server(port=8080)
+            
+            # Save the credentials for the next run
+            with open('token.json', 'w') as token:
+                token.write(self.credentials.to_json())
             
             return self.credentials
             
