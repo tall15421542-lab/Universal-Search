@@ -8,8 +8,8 @@ that handles Google Drive file metadata serialization and sending.
 import pytest
 import json
 from unittest.mock import Mock, patch, mock_open
-from kafka_producer import DriveFileKafkaProducer
-from kafka_config import get_topic_name
+from universal_search.producers.kafka_producer import DriveFileKafkaProducer
+from universal_search.config.kafka_config import get_topic_name
 
 
 class TestDriveFileKafkaProducer:

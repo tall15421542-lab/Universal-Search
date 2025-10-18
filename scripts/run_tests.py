@@ -18,7 +18,7 @@ def run_streaming_job_tests():
     print("=" * 50)
     
     # Import streaming job tests
-    from test_streaming_job import TestDriveStreamingJob, TestDriveStreamingJobIntegration
+    from tests.test_streaming_job import TestDriveStreamingJob, TestDriveStreamingJobIntegration
     
     # Create test suite
     loader = unittest.TestLoader()
@@ -50,8 +50,8 @@ def run_pytest_tests():
     # Run pytest with verbose output for all test files
     cmd = [
         sys.executable, "-m", "pytest", 
-        "test_drive_client.py", 
-        "test_kafka_producer.py",
+        "tests/test_drive_client.py", 
+        "tests/test_kafka_producer.py",
         "-v", 
         "--tb=short",
         "--color=yes"

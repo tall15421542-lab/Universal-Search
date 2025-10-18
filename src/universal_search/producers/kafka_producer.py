@@ -12,7 +12,7 @@ from confluent_kafka import Producer, KafkaException
 from confluent_kafka.serialization import SerializationContext, MessageField
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
-from kafka_config import (
+from ..config.kafka_config import (
     get_producer_config, 
     get_topic_name, 
     get_schema_name, 
