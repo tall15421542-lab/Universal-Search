@@ -115,7 +115,11 @@ class DriveClient:
             # Fall back to installed credentials and write to token.json
             # Convert web credentials to installed format for InstalledAppFlow
             self._validate_credentials_structure(credentials_config)
-            installed_credentials = credentials_config['web']
+            
+            # Convert web credentials to installed app format
+            installed_credentials = {
+                "installed": credentials_config['web']
+            }
             
             # Create OAuth2 flow using InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(
@@ -172,7 +176,7 @@ class DriveClient:
             # Prepare query parameters
             query_params = {
                 'pageSize': page_size,
-                'fields': 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)'
+                'fields': 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime, size, webViewLink, webContentLink, parents, owners)'
             }
             
             if page_token:

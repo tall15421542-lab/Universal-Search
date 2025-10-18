@@ -6,6 +6,7 @@ import os
 from typing import Dict, Any
 
 # Kafka Configuration
+# Default to localhost for local development, use kafka:9092 for Docker networking
 KAFKA_CONFIG = {
     'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
     'client.id': 'drive-client-producer',
@@ -13,21 +14,17 @@ KAFKA_CONFIG = {
     'retries': 3,
     'retry.backoff.ms': 1000,
     'batch.size': 16384,
-    'linger.ms': 10,
-    'buffer.memory': 33554432,
+    'linger.ms': 100,
     'compression.type': 'snappy',
-    'max.in.flight.requests.per.connection': 1,
     'enable.idempotence': True,
     'request.timeout.ms': 30000,
     'delivery.timeout.ms': 120000,
 }
 
 # Schema Registry Configuration
+# Default to localhost for local development, use schema-registry:8081 for Docker networking
 SCHEMA_REGISTRY_CONFIG = {
     'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8081'),
-    'auto.register.schemas': True,
-    'use.latest.version': True,
-    'normalize.schemas': True,
 }
 
 # Topic Configuration
@@ -38,27 +35,25 @@ TOPIC_CONFIG = {
 }
 
 # Avro Serializer Configuration
+# Note: Cannot enable both 'use.latest.version' and 'auto.register.schemas' at the same time
+# - auto.register.schemas: True means schemas will be auto-registered if not present
+# - use.latest.version: False means we use the schema ID embedded in the message
 AVRO_SERIALIZER_CONFIG = {
     'auto.register.schemas': True,
-    'use.latest.version': True,
     'normalize.schemas': True,
 }
 
 def get_producer_config() -> Dict[str, Any]:
     """
-    Get the complete producer configuration combining Kafka and Schema Registry settings.
+    Get the Kafka producer configuration.
+    
+    Note: Schema Registry settings should NOT be included in the producer config.
+    They are used separately when initializing the SchemaRegistryClient and AvroSerializer.
     
     Returns:
-        Dict containing the complete producer configuration.
+        Dict containing the Kafka producer configuration.
     """
-    config = KAFKA_CONFIG.copy()
-    config.update({
-        'schema.registry.url': SCHEMA_REGISTRY_CONFIG['url'],
-        'auto.register.schemas': SCHEMA_REGISTRY_CONFIG['auto.register.schemas'],
-        'use.latest.version': SCHEMA_REGISTRY_CONFIG['use.latest.version'],
-        'normalize.schemas': SCHEMA_REGISTRY_CONFIG['normalize.schemas'],
-    })
-    return config
+    return KAFKA_CONFIG.copy()
 
 def get_topic_name() -> str:
     """
@@ -86,3 +81,21 @@ def get_schema_namespace() -> str:
         String containing the schema namespace.
     """
     return TOPIC_CONFIG['schema_namespace']
+
+def get_schema_registry_config() -> Dict[str, Any]:
+    """
+    Get the Schema Registry client configuration.
+    
+    Returns:
+        Dict containing the Schema Registry configuration (only 'url' key).
+    """
+    return {'url': SCHEMA_REGISTRY_CONFIG['url']}
+
+def get_avro_serializer_config() -> Dict[str, Any]:
+    """
+    Get the Avro serializer configuration.
+    
+    Returns:
+        Dict containing the Avro serializer configuration.
+    """
+    return AVRO_SERIALIZER_CONFIG.copy()

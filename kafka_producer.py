@@ -16,7 +16,9 @@ from kafka_config import (
     get_producer_config, 
     get_topic_name, 
     get_schema_name, 
-    get_schema_namespace
+    get_schema_namespace,
+    get_schema_registry_config,
+    get_avro_serializer_config
 )
 
 
@@ -47,21 +49,21 @@ class DriveFileKafkaProducer:
             Exception: If schema registry initialization fails.
         """
         try:
-            # Initialize Schema Registry client
-            schema_registry_config = {
-                'url': 'http://localhost:8081'
-            }
+            # Initialize Schema Registry client using config from kafka_config
+            schema_registry_config = get_schema_registry_config()
             self.schema_registry_client = SchemaRegistryClient(schema_registry_config)
             
-            # Create Avro serializer without schema string
-            # The schema will be auto-registered from the data structure
+            # Load the Avro schema from file
+            schema_path = "schemas/drive_file.avsc"
+            with open(schema_path, 'r') as f:
+                schema_str = f.read()
+            
+            # Create Avro serializer with explicit schema
+            avro_config = get_avro_serializer_config()
             self.avro_serializer = AvroSerializer(
                 self.schema_registry_client,
-                conf={
-                    'auto.register.schemas': True,
-                    'use.latest.version': True,
-                    'normalize.schemas': True
-                }
+                schema_str,
+                conf=avro_config
             )
         except Exception as e:
             raise Exception(f"Failed to initialize schema registry: {str(e)}")
@@ -109,9 +111,29 @@ class DriveFileKafkaProducer:
             file_data.setdefault('id', '')
             file_data.setdefault('parents', [])
             
+            # Create a proper data structure that matches the Avro schema
+            # The Avro serializer expects specific field names and types
+            avro_data = {
+                'id': file_data.get('id', ''),
+                'name': file_data.get('name', ''),
+                'mimeType': file_data.get('mimeType'),
+                'createdTime': file_data.get('createdTime'),
+                'modifiedTime': file_data.get('modifiedTime'),
+                'size': int(file_data.get('size', 0)) if file_data.get('size') else None,
+                'webViewLink': file_data.get('webViewLink'),
+                'webContentLink': file_data.get('webContentLink'),
+                'parents': file_data.get('parents', []),
+                'owners': []  # Default empty array for owners
+            }
+            
+            print(avro_data)
+            # Check if serializer is properly initialized
+            if self.avro_serializer is None:
+                raise Exception("Avro serializer is not initialized")
+            
             # Serialize the data
             serialized_data = self.avro_serializer(
-                file_data,
+                avro_data,
                 SerializationContext(self.topic_name, MessageField.VALUE)
             )
             
