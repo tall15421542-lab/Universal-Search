@@ -7,20 +7,20 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 install: ## Install the package in development mode
-	pip install -e .
+	pip3 install -e .
 
 install-dev: ## Install development dependencies
-	pip install -e ".[dev]"
+	pip3 install -e ".[dev]"
 	pre-commit install
 
 test: ## Run all tests
-	python -m pytest tests/ -v
+	python3 -m pytest tests/ -v
 
 test-unit: ## Run unit tests only
-	python -m pytest tests/ -v -m "not integration"
+	python3 -m pytest tests/ -v -m "not integration"
 
 test-integration: ## Run integration tests only
-	python -m pytest tests/ -v -m "integration"
+	python3 -m pytest tests/ -v -m "integration"
 
 lint: ## Run linting checks
 	flake8 src/ tests/
@@ -55,9 +55,9 @@ docker-logs: ## Show Docker service logs
 	docker-compose -f docker/docker-compose.yml logs -f
 
 run-streaming-job: ## Run the streaming job
-	python -m universal_search.jobs.drive_streaming_job
+	python3 -m universal_search.jobs.drive_streaming_job
 
 run-tests-legacy: ## Run tests using the legacy test runner
-	python scripts/run_tests.py
+	python3 scripts/run_tests.py
 
 check: format-check lint test ## Run all checks (format, lint, test)

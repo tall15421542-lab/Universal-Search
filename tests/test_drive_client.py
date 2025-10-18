@@ -67,7 +67,7 @@ class TestDriveClient:
                 mock_json_load.return_value = self.test_credentials
                 
                 # Import here to avoid import issues during test discovery
-                from drive_client import DriveClient
+                from universal_search.clients.drive_client import DriveClient
                 
                 client = DriveClient()
                 credentials = client._load_credentials()
@@ -78,7 +78,7 @@ class TestDriveClient:
     def test_load_credentials_file_not_found(self):
         """Test handling when credentials.json file is not found."""
         with patch("builtins.open", side_effect=FileNotFoundError("File not found")):
-            from drive_client import DriveClient
+            from universal_search.clients.drive_client import DriveClient
             
             client = DriveClient()
             
@@ -89,7 +89,7 @@ class TestDriveClient:
         """Test handling of invalid JSON in credentials.json file."""
         with patch("builtins.open", mock_open(read_data="invalid json")):
             with patch("json.load", side_effect=json.JSONDecodeError("Invalid JSON", "", 0)):
-                from drive_client import DriveClient
+                from universal_search.clients.drive_client import DriveClient
                 
                 client = DriveClient()
                 
@@ -98,7 +98,7 @@ class TestDriveClient:
 
     def test_validate_credentials_structure_valid(self):
         """Test validation of valid credentials structure."""
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -109,7 +109,7 @@ class TestDriveClient:
         """Test validation fails when 'web' key is missing."""
         invalid_credentials = {"invalid": "structure"}
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -125,7 +125,7 @@ class TestDriveClient:
             }
         }
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -144,7 +144,7 @@ class TestDriveClient:
         mock_from_client_config.return_value = mock_flow
         mock_exists.return_value = False  # No existing token
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -159,7 +159,7 @@ class TestDriveClient:
         """Test authentication failure with invalid credentials."""
         mock_from_client_config.side_effect = Exception("Invalid credentials")
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -179,7 +179,7 @@ class TestDriveClient:
         mock_service.files.return_value = mock_files
         mock_build.return_value = mock_service
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         files, next_page_token = client.list_files(mock_service)
@@ -190,7 +190,7 @@ class TestDriveClient:
         assert next_page_token is None  # No next page token in mock response
         mock_files.list.assert_called_once_with(
             pageSize=100,
-            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)"
+            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime, size, webViewLink, webContentLink, parents, owners)"
         )
 
     @patch('googleapiclient.discovery.build')
@@ -209,7 +209,7 @@ class TestDriveClient:
         mock_service.files.return_value = mock_files
         mock_build.return_value = mock_service
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -228,7 +228,7 @@ class TestDriveClient:
         mock_service.files.return_value = mock_files
         mock_build.return_value = mock_service
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         files, next_page_token = client.list_files(mock_service)
@@ -260,7 +260,7 @@ class TestDriveClient:
         mock_service.files.return_value = mock_files
         mock_build.return_value = mock_service
         
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -280,25 +280,25 @@ class TestDriveClient:
         assert mock_files.list.call_count == 2
         mock_files.list.assert_any_call(
             pageSize=100,
-            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)"
+            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime, size, webViewLink, webContentLink, parents, owners)"
         )
         mock_files.list.assert_any_call(
             pageSize=50,
             pageToken="next-token",
-            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)"
+            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime, size, webViewLink, webContentLink, parents, owners)"
         )
 
     @patch('googleapiclient.discovery.build')
     def test_list_files_api_error(self, mock_build):
         """Test successful creation of Google Drive service."""
-        with patch('drive_client.build') as mock_build:
+        with patch('universal_search.clients.drive_client.build') as mock_build:
             mock_service = Mock()
             mock_build.return_value = mock_service
             
             # Create a mock credentials object
             mock_credentials = Mock()
             
-            from drive_client import DriveClient
+            from universal_search.clients.drive_client import DriveClient
             
             client = DriveClient()
             service = client.get_drive_service(mock_credentials)
@@ -310,8 +310,8 @@ class TestDriveClient:
 
     def test_get_drive_service_build_error(self):
         """Test handling of service build errors."""
-        with patch('drive_client.build', side_effect=Exception("Build error")):
-            from drive_client import DriveClient
+        with patch('universal_search.clients.drive_client.build', side_effect=Exception("Build error")):
+            from universal_search.clients.drive_client import DriveClient
             
             # Create a mock credentials object
             mock_credentials = Mock()
@@ -323,7 +323,7 @@ class TestDriveClient:
 
     def test_main_function_success(self):
         """Test successful execution of main function."""
-        with patch('drive_client.DriveClient') as mock_client_class:
+        with patch('universal_search.clients.drive_client.DriveClient') as mock_client_class:
             mock_client = Mock()
             mock_client_class.return_value = mock_client
             
@@ -337,28 +337,28 @@ class TestDriveClient:
             # Mock list_files to return (files, next_page_token) tuple
             mock_client.list_files.return_value = (mock_files, None)
             
-            from drive_client import main
+            from universal_search.clients.drive_client import main
             
             # Should not raise any exception
             main()
 
     def test_main_function_authentication_failure(self):
         """Test main function handling authentication failure."""
-        with patch('drive_client.DriveClient') as mock_client_class:
+        with patch('universal_search.clients.drive_client.DriveClient') as mock_client_class:
             mock_client = Mock()
             mock_client_class.return_value = mock_client
             
             # Make the client.main() method raise FileNotFoundError
             mock_client.main.side_effect = FileNotFoundError("File not found")
             
-            from drive_client import main
+            from universal_search.clients.drive_client import main
             
             with pytest.raises(FileNotFoundError):
                 main()
 
     def test_scope_validation(self):
         """Test that the correct OAuth scope is used."""
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         
@@ -367,7 +367,7 @@ class TestDriveClient:
 
     def test_redirect_uri_validation(self):
         """Test that the correct redirect URI is used."""
-        from drive_client import DriveClient
+        from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
         

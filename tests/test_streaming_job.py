@@ -19,8 +19,8 @@ class TestDriveStreamingJob(unittest.TestCase):
         # Individual tests will create job instances with proper mocking
         pass
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_initialization_success(self, mock_producer_class, mock_client_class):
         """Test successful initialization and basic properties."""
         # Mock the components
@@ -53,8 +53,8 @@ class TestDriveStreamingJob(unittest.TestCase):
         mock_client.authenticate.assert_called_once()
         mock_client.get_drive_service.assert_called_once()
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_status_reporting(self, mock_producer_class, mock_client_class):
         """Test status reporting functionality."""
         # Mock the components
@@ -87,7 +87,7 @@ class TestDriveStreamingJob(unittest.TestCase):
         self.assertEqual(status['total_files_sent'], 0)
         self.assertEqual(status['total_files_failed'], 0)
     
-    @patch('drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
     def test_initialization_failure(self, mock_client_class):
         """Test initialization failure."""
         # Mock client to raise exception
@@ -99,8 +99,8 @@ class TestDriveStreamingJob(unittest.TestCase):
         with self.assertRaises(Exception):
             DriveStreamingJob()
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_stop(self, mock_producer_class, mock_client_class):
         """Test job stopping."""
         # Mock the components
@@ -126,8 +126,8 @@ class TestDriveStreamingJob(unittest.TestCase):
 class TestDriveStreamingJobIntegration(unittest.TestCase):
     """Integration tests for DriveStreamingJob."""
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_process_files_batch(self, mock_producer_class, mock_client_class):
         """Test processing a batch of files."""
         # Setup mocks
@@ -161,8 +161,8 @@ class TestDriveStreamingJobIntegration(unittest.TestCase):
         self.assertEqual(job.total_files_processed, 2)
         self.assertEqual(job.total_files_sent, 2)
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_job_run_complete_flow(self, mock_producer_class, mock_client_class):
         """Test complete job run flow."""
         # Setup mocks
@@ -217,8 +217,8 @@ class TestDriveStreamingJobIntegration(unittest.TestCase):
         self.assertEqual(mock_producer.send_files.call_count, 2)  # Two batches sent
         mock_producer.close.assert_called_once()  # Producer should be closed
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_job_run_with_max_files_limit(self, mock_producer_class, mock_client_class):
         """Test job run with max files limit."""
         # Setup mocks
@@ -264,8 +264,8 @@ class TestDriveStreamingJobIntegration(unittest.TestCase):
         mock_producer.send_files.assert_called_once()
         mock_producer.close.assert_called_once()
     
-    @patch('drive_streaming_job.DriveClient')
-    @patch('drive_streaming_job.DriveFileKafkaProducer')
+    @patch('universal_search.jobs.drive_streaming_job.DriveClient')
+    @patch('universal_search.jobs.drive_streaming_job.DriveFileKafkaProducer')
     def test_job_run_with_no_files(self, mock_producer_class, mock_client_class):
         """Test job run when no files are found."""
         # Setup mocks

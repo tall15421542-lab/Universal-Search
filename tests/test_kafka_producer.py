@@ -35,9 +35,9 @@ class TestDriveFileKafkaProducer:
             ]
         }
     
-    @patch('kafka_producer.SchemaRegistryClient')
-    @patch('kafka_producer.AvroSerializer')
-    @patch('kafka_producer.Producer')
+    @patch('universal_search.producers.kafka_producer.SchemaRegistryClient')
+    @patch('universal_search.producers.kafka_producer.AvroSerializer')
+    @patch('universal_search.producers.kafka_producer.Producer')
     def test_producer_initialization_success(self, mock_producer, mock_serializer, mock_schema_registry):
         """Test successful producer initialization."""
         # Mock schema registry client
@@ -62,8 +62,8 @@ class TestDriveFileKafkaProducer:
         assert producer.avro_serializer == mock_avro_serializer
         
     
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_producer')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer')
     def test_send_file_success(self, mock_init_producer, mock_init_schema):
         """Test successful file sending to Kafka."""
         # Mock producer and serializer
@@ -93,8 +93,8 @@ class TestDriveFileKafkaProducer:
         assert self.test_file_data['id'] == 'test_file_123'  # Should remain unchanged
         assert self.test_file_data['parents'] == ['parent_folder_1']  # Should remain unchanged
     
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_producer')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer')
     def test_send_file_failure(self, mock_init_producer, mock_init_schema):
         """Test file sending failure."""
         # Mock producer and serializer to raise exception
@@ -112,8 +112,8 @@ class TestDriveFileKafkaProducer:
         # Verify failure
         assert result is False
     
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_producer')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer')
     def test_send_file_missing_id(self, mock_init_producer, mock_init_schema):
         """Test file sending when file ID is missing."""
         # Mock producer and serializer
@@ -149,8 +149,8 @@ class TestDriveFileKafkaProducer:
         assert file_data_no_id['parents'] == []  # Default empty list
     
     
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_producer')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer')
     def test_send_files_multiple(self, mock_init_producer, mock_init_schema):
         """Test sending multiple files to Kafka."""
         # Mock producer and serializer
@@ -175,8 +175,8 @@ class TestDriveFileKafkaProducer:
         assert mock_producer.produce.call_count == 2
         mock_producer.flush.assert_called_once()
     
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_producer')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer')
     def test_close_producer(self, mock_init_producer, mock_init_schema):
         """Test producer close functionality."""
         mock_producer = Mock()
@@ -190,8 +190,8 @@ class TestDriveFileKafkaProducer:
         # Verify flush was called
         mock_producer.flush.assert_called_once()
     
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
-    @patch('kafka_producer.DriveFileKafkaProducer._initialize_producer')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry')
+    @patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer')
     def test_context_manager(self, mock_init_producer, mock_init_schema):
         """Test producer as context manager."""
         mock_producer = Mock()
@@ -205,8 +205,8 @@ class TestDriveFileKafkaProducer:
     
     def test_delivery_callback_success(self):
         """Test delivery callback for successful message delivery."""
-        with patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry'), \
-             patch('kafka_producer.DriveFileKafkaProducer._initialize_producer'):
+        with patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry'), \
+             patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer'):
             
             producer = DriveFileKafkaProducer()
             
@@ -228,8 +228,8 @@ class TestDriveFileKafkaProducer:
     
     def test_delivery_callback_failure(self):
         """Test delivery callback for failed message delivery."""
-        with patch('kafka_producer.DriveFileKafkaProducer._initialize_schema_registry'), \
-             patch('kafka_producer.DriveFileKafkaProducer._initialize_producer'):
+        with patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_schema_registry'), \
+             patch('universal_search.producers.kafka_producer.DriveFileKafkaProducer._initialize_producer'):
             
             producer = DriveFileKafkaProducer()
             
