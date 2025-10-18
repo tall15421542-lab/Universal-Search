@@ -86,9 +86,6 @@ class DriveClient:
             Exception: If authentication fails.
         """
         try:
-            # Validate credentials structure
-            self._validate_credentials_structure(credentials_config)
-            
             # Check if token.json exists
             if os.path.exists('token.json'):
                 # Load credentials from token.json
@@ -117,6 +114,7 @@ class DriveClient:
             
             # Fall back to installed credentials and write to token.json
             # Convert web credentials to installed format for InstalledAppFlow
+            self._validate_credentials_structure(credentials_config)
             installed_credentials = credentials_config['web']
             
             # Create OAuth2 flow using InstalledAppFlow
