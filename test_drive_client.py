@@ -182,49 +182,16 @@ class TestDriveClient:
         from drive_client import DriveClient
         
         client = DriveClient()
-        files = client.list_files(mock_service)
+        files, next_page_token = client.list_files(mock_service)
         
         assert len(files) == 2
         assert files[0]["name"] == "Test Document"
         assert files[1]["name"] == "Test Spreadsheet"
+        assert next_page_token is None  # No next page token in mock response
         mock_files.list.assert_called_once_with(
             pageSize=100,
             fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)"
         )
-
-    @patch('googleapiclient.discovery.build')
-    def test_list_files_with_pagination(self, mock_build):
-        """Test file listing with pagination handling."""
-        # Mock service with pagination
-        mock_service = Mock()
-        mock_files = Mock()
-        mock_list = Mock()
-        
-        # First page response
-        first_page_response = {
-            "files": [{"id": "1", "name": "File 1"}],
-            "nextPageToken": "next-token"
-        }
-        
-        # Second page response
-        second_page_response = {
-            "files": [{"id": "2", "name": "File 2"}]
-        }
-        
-        mock_list.execute.side_effect = [first_page_response, second_page_response]
-        mock_files.list.return_value = mock_list
-        mock_service.files.return_value = mock_files
-        mock_build.return_value = mock_service
-        
-        from drive_client import DriveClient
-        
-        client = DriveClient()
-        files = client.list_files(mock_service)
-        
-        assert len(files) == 2
-        assert files[0]["name"] == "File 1"
-        assert files[1]["name"] == "File 2"
-        assert mock_list.execute.call_count == 2
 
     @patch('googleapiclient.discovery.build')
     def test_list_files_api_error(self, mock_build):
@@ -264,11 +231,65 @@ class TestDriveClient:
         from drive_client import DriveClient
         
         client = DriveClient()
-        files = client.list_files(mock_service)
+        files, next_page_token = client.list_files(mock_service)
         
         assert len(files) == 0
+        assert next_page_token is None
 
-    def test_get_drive_service_success(self):
+    @patch('googleapiclient.discovery.build')
+    def test_list_files_pagination(self, mock_build):
+        """Test file listing with pagination functionality."""
+        mock_service = Mock()
+        mock_files = Mock()
+        mock_list = Mock()
+        
+        # Test 1: First page with nextPageToken
+        first_page_response = {
+            "files": [{"id": "1", "name": "File 1"}],
+            "nextPageToken": "next-token"
+        }
+        
+        # Test 2: Second page with specific page_token parameter
+        second_page_response = {
+            "files": [{"id": "2", "name": "File 2"}],
+            "nextPageToken": None
+        }
+        
+        mock_list.execute.side_effect = [first_page_response, second_page_response]
+        mock_files.list.return_value = mock_list
+        mock_service.files.return_value = mock_files
+        mock_build.return_value = mock_service
+        
+        from drive_client import DriveClient
+        
+        client = DriveClient()
+        
+        # Test first page (no page_token)
+        files, next_page_token = client.list_files(mock_service)
+        assert len(files) == 1
+        assert files[0]["name"] == "File 1"
+        assert next_page_token == "next-token"
+        
+        # Test second page (with page_token)
+        files, next_page_token = client.list_files(mock_service, page_size=50, page_token="next-token")
+        assert len(files) == 1
+        assert files[0]["name"] == "File 2"
+        assert next_page_token is None
+        
+        # Verify API calls
+        assert mock_files.list.call_count == 2
+        mock_files.list.assert_any_call(
+            pageSize=100,
+            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)"
+        )
+        mock_files.list.assert_any_call(
+            pageSize=50,
+            pageToken="next-token",
+            fields="nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)"
+        )
+
+    @patch('googleapiclient.discovery.build')
+    def test_list_files_api_error(self, mock_build):
         """Test successful creation of Google Drive service."""
         with patch('drive_client.build') as mock_build:
             mock_service = Mock()
@@ -313,7 +334,8 @@ class TestDriveClient:
             mock_client._load_credentials.return_value = mock_credentials
             mock_client.authenticate.return_value = Mock()  # Mock credentials object
             mock_client.get_drive_service.return_value = mock_service
-            mock_client.list_files.return_value = mock_files
+            # Mock list_files to return (files, next_page_token) tuple
+            mock_client.list_files.return_value = (mock_files, None)
             
             from drive_client import main
             

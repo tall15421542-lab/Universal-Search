@@ -34,24 +34,47 @@ def example_usage():
         service = client.get_drive_service(credentials)
         print("   ✅ Drive service created")
         
-        # List files
-        print("4. Fetching files from Google Drive...")
-        files = client.list_files(service)
-        print(f"   ✅ Found {len(files)} files")
+        # Example 1: List all files using helper method
+        print("4a. Fetching all files using helper method...")
+        all_files = client.list_all_files(service)
+        print(f"   ✅ Found {len(all_files)} files")
         
-        # Display results
-        print("\n📁 Files in your Google Drive:")
+        # Example 2: Manual pagination control
+        print("\n4b. Manual pagination example (first 2 pages):")
+        page_token = None
+        page_count = 0
+        total_files = 0
+        
+        while page_count < 2:  # Limit to 2 pages for example
+            page_count += 1
+            files, next_page_token = client.list_files(service, page_size=5, page_token=page_token)
+            total_files += len(files)
+            
+            print(f"   📄 Page {page_count}: {len(files)} files")
+            for file in files:
+                print(f"      - {file.get('name', 'Unknown')}")
+            
+            if not next_page_token:
+                print("   ✅ No more pages available")
+                break
+                
+            page_token = next_page_token
+        
+        print(f"   ✅ Total files from manual pagination: {total_files}")
+        
+        # Display results from helper method
+        print("\n📁 Sample files from your Google Drive:")
         print("-" * 50)
         
-        if files:
-            for i, file in enumerate(files[:10], 1):  # Show first 10 files
+        if all_files:
+            for i, file in enumerate(all_files[:10], 1):  # Show first 10 files
                 print(f"{i:2d}. {file.get('name', 'Unknown')}")
                 print(f"    📄 Type: {file.get('mimeType', 'Unknown')}")
                 print(f"    📅 Modified: {file.get('modifiedTime', 'Unknown')}")
                 print()
             
-            if len(files) > 10:
-                print(f"... and {len(files) - 10} more files")
+            if len(all_files) > 10:
+                print(f"... and {len(all_files) - 10} more files")
         else:
             print("No files found in Google Drive.")
             

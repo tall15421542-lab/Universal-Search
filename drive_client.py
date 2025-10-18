@@ -151,53 +151,43 @@ class DriveClient:
         except Exception as e:
             raise Exception(f"Failed to create Drive service: {str(e)}")
     
-    def list_files(self, service, page_size: int = 100) -> List[Dict[str, Any]]:
+    def list_files(self, service, page_size: int = 100, page_token: Optional[str] = None) -> tuple[List[Dict[str, Any]], Optional[str]]:
         """
         List files from Google Drive with pagination support.
         
         Args:
             service: Google Drive API service object.
             page_size: Number of files to fetch per page.
+            page_token: Token for the next page of results. If None, starts from the beginning.
             
         Returns:
-            List of file dictionaries containing file metadata.
+            Tuple containing:
+            - List of file dictionaries containing file metadata for the current page
+            - Next page token (None if this is the last page)
             
         Raises:
             HttpError: If Google Drive API returns an error.
         """
-        all_files = []
-        page_token = None
-        
-        while True:
-            try:
-                # Prepare query parameters
-                query_params = {
-                    'pageSize': page_size,
-                    'fields': 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)'
-                }
-                
-                if page_token:
-                    query_params['pageToken'] = page_token
-                
-                # Execute API call
-                results = service.files().list(**query_params).execute()
-                files = results.get('files', [])
-
-                print(files)
-                
-                # Add files to result list
-                all_files.extend(files)
-                
-                # Check if there are more pages
-                page_token = results.get('nextPageToken')
-                if not page_token:
-                    break
+        try:
+            # Prepare query parameters
+            query_params = {
+                'pageSize': page_size,
+                'fields': 'nextPageToken, files(id, name, mimeType, createdTime, modifiedTime)'
+            }
+            
+            if page_token:
+                query_params['pageToken'] = page_token
+            
+            # Execute API call
+            results = service.files().list(**query_params).execute()
+            files = results.get('files', [])
+            next_page_token = results.get('nextPageToken')
+            
+            return files, next_page_token
                     
-            except HttpError as e:
-                # Re-raise HttpError to be handled by caller
-                raise e
-        
-        return all_files
+        except HttpError as e:
+            # Re-raise HttpError to be handled by caller
+            raise e
     
     def main(self) -> None:
         """
@@ -223,16 +213,26 @@ class DriveClient:
             print("Creating Drive service...")
             service = self.get_drive_service(credentials)
             
-            # List files
+            # List files with pagination
             print("Fetching files from Google Drive...")
-            files = self.list_files(service)
+            all_files = []
+            page_token = None
+            
+            while True:
+                files, next_page_token = self.list_files(service, page_size=100, page_token=page_token)
+                all_files.extend(files)
+                
+                if not next_page_token:
+                    break
+                    
+                page_token = next_page_token
             
             # Display results
-            print(f"\nFound {len(files)} files:")
+            print(f"\nFound {len(all_files)} files:")
             print("-" * 50)
             
-            if files:
-                for i, file in enumerate(files, 1):
+            if all_files:
+                for i, file in enumerate(all_files, 1):
                     print(f"{i}. {file.get('name', 'Unknown')}")
                     print(f"   ID: {file.get('id', 'Unknown')}")
                     print(f"   Type: {file.get('mimeType', 'Unknown')}")
