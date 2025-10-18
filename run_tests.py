@@ -13,17 +13,18 @@ import os
 
 def run_tests():
     """Run the test suite with pytest."""
-    print("Running Google Drive client tests...")
+    print("Running Google Drive client and Kafka producer tests...")
     print("=" * 50)
     
     # Ensure we're in the correct directory
     script_dir = os.path.dirname(os.path.abspath(__file__))
     os.chdir(script_dir)
     
-    # Run pytest with verbose output
+    # Run pytest with verbose output for all test files
     cmd = [
         sys.executable, "-m", "pytest", 
         "test_drive_client.py", 
+        "test_kafka_producer.py",
         "-v", 
         "--tb=short",
         "--color=yes"

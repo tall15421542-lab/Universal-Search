@@ -1,0 +1,86 @@
+{
+  "type": "record",
+  "name": "DriveFile",
+  "namespace": "com.universalsearch.drive",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "doc": "Unique identifier for the Google Drive file"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "doc": "Name of the file"
+    },
+    {
+      "name": "mimeType",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "MIME type of the file"
+    },
+    {
+      "name": "createdTime",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ISO 8601 timestamp when the file was created"
+    },
+    {
+      "name": "modifiedTime",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ISO 8601 timestamp when the file was last modified"
+    },
+    {
+      "name": "size",
+      "type": ["null", "long"],
+      "default": null,
+      "doc": "Size of the file in bytes"
+    },
+    {
+      "name": "webViewLink",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Link to view the file in Google Drive"
+    },
+    {
+      "name": "webContentLink",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Link to download the file content"
+    },
+    {
+      "name": "parents",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "List of parent folder IDs"
+    },
+    {
+      "name": "owners",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "Owner",
+          "fields": [
+            {
+              "name": "displayName",
+              "type": ["null", "string"],
+              "default": null
+            },
+            {
+              "name": "emailAddress",
+              "type": ["null", "string"],
+              "default": null
+            }
+          ]
+        }
+      },
+      "default": [],
+      "doc": "List of file owners"
+    }
+  ]
+}
