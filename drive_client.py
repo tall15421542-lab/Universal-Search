@@ -5,6 +5,7 @@ This module provides a client for authenticating with Google Drive API
 and listing files from the user's Google Drive.
 """
 
+from asyncio import create_eager_task_factory
 import json
 import os
 from typing import Dict, List, Any, Optional
@@ -116,16 +117,7 @@ class DriveClient:
             
             # Fall back to installed credentials and write to token.json
             # Convert web credentials to installed format for InstalledAppFlow
-            installed_credentials = {
-                "installed": {
-                    "client_id": credentials_config["web"]["client_id"],
-                    "client_secret": credentials_config["web"]["client_secret"],
-                    "auth_uri": credentials_config["web"]["auth_uri"],
-                    "token_uri": credentials_config["web"]["token_uri"],
-                    "auth_provider_x509_cert_url": credentials_config["web"]["auth_provider_x509_cert_url"],
-                    "redirect_uris": credentials_config["web"]["redirect_uris"]
-                }
-            }
+            installed_credentials = credentials_config['web']
             
             # Create OAuth2 flow using InstalledAppFlow
             flow = InstalledAppFlow.from_client_config(
