@@ -14,8 +14,10 @@ from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroSerializer
 from ..config.kafka_config import (
     get_producer_config, 
-    get_topic_name, 
-    get_schema_name, 
+    get_drive_files_topic
+)
+from ..config.schema_registry_config import (
+    get_drive_file_schema_name,
     get_schema_namespace,
     get_schema_registry_config,
     get_avro_serializer_config
@@ -25,9 +27,12 @@ from ..config.kafka_config import (
 class DriveFileKafkaProducer:
     """Kafka producer for Google Drive file metadata using Avro serialization."""
     
-    def __init__(self):
+    def __init__(self, client_id: str = 'drive-file-producer'):
         """
         Initialize the Kafka producer with Avro serialization.
+        
+        Args:
+            client_id: Client ID to use for the Kafka producer.
         
         Raises:
             Exception: If producer initialization fails.
@@ -35,7 +40,8 @@ class DriveFileKafkaProducer:
         self.producer = None
         self.schema_registry_client = None
         self.avro_serializer = None
-        self.topic_name = get_topic_name()
+        self.topic_name = get_drive_files_topic()
+        self.client_id = client_id
         
         self._initialize_schema_registry()
         self._initialize_producer()
@@ -76,7 +82,7 @@ class DriveFileKafkaProducer:
             Exception: If producer initialization fails.
         """
         try:
-            config = get_producer_config()
+            config = get_producer_config(self.client_id)
             self.producer = Producer(config)
         except Exception as e:
             raise Exception(f"Failed to initialize Kafka producer: {str(e)}")

@@ -1,0 +1,60 @@
+{
+  "type": "record",
+  "name": "ParsedFile",
+  "namespace": "com.universalsearch.drive",
+  "fields": [
+    {
+      "name": "id",
+      "type": "string",
+      "doc": "Unique identifier for the Google Drive file"
+    },
+    {
+      "name": "name",
+      "type": "string",
+      "doc": "Name of the file"
+    },
+    {
+      "name": "mimeType",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "MIME type of the file"
+    },
+    {
+      "name": "modifiedTime",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ISO 8601 timestamp when the file was last modified"
+    },
+    {
+      "name": "storagePath",
+      "type": "string",
+      "doc": "Path to the stored parsed content in storage"
+    },
+    {
+      "name": "textLength",
+      "type": ["null", "long"],
+      "default": null,
+      "doc": "Length of the extracted text content"
+    },
+    {
+      "name": "parseTimestamp",
+      "type": "string",
+      "doc": "ISO 8601 timestamp when parsing occurred"
+    },
+    {
+      "name": "parseStatus",
+      "type": {
+        "type": "enum",
+        "name": "ParseStatus",
+        "symbols": ["success", "failed", "skipped"]
+      },
+      "doc": "Status of the parsing operation"
+    },
+    {
+      "name": "errorMessage",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Error message if parsing failed"
+    }
+  ]
+}

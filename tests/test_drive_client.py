@@ -182,7 +182,8 @@ class TestDriveClient:
         from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
-        files, next_page_token = client.list_files(mock_service)
+        client.service = mock_service  # Set the service directly
+        files, next_page_token = client.list_files()
         
         assert len(files) == 2
         assert files[0]["name"] == "Test Document"
@@ -212,9 +213,10 @@ class TestDriveClient:
         from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
+        client.service = mock_service  # Set the service directly
         
         with pytest.raises(HttpError):
-            client.list_files(mock_service)
+            client.list_files()
 
     @patch('googleapiclient.discovery.build')
     def test_list_files_empty_response(self, mock_build):
@@ -231,7 +233,8 @@ class TestDriveClient:
         from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
-        files, next_page_token = client.list_files(mock_service)
+        client.service = mock_service  # Set the service directly
+        files, next_page_token = client.list_files()
         
         assert len(files) == 0
         assert next_page_token is None
@@ -263,15 +266,16 @@ class TestDriveClient:
         from universal_search.clients.drive_client import DriveClient
         
         client = DriveClient()
+        client.service = mock_service  # Set the service directly
         
         # Test first page (no page_token)
-        files, next_page_token = client.list_files(mock_service)
+        files, next_page_token = client.list_files()
         assert len(files) == 1
         assert files[0]["name"] == "File 1"
         assert next_page_token == "next-token"
         
         # Test second page (with page_token)
-        files, next_page_token = client.list_files(mock_service, page_size=50, page_token="next-token")
+        files, next_page_token = client.list_files(page_size=50, page_token="next-token")
         assert len(files) == 1
         assert files[0]["name"] == "File 2"
         assert next_page_token is None
@@ -333,7 +337,6 @@ class TestDriveClient:
             
             mock_client._load_credentials.return_value = mock_credentials
             mock_client.authenticate.return_value = Mock()  # Mock credentials object
-            mock_client.get_drive_service.return_value = mock_service
             # Mock list_files to return (files, next_page_token) tuple
             mock_client.list_files.return_value = (mock_files, None)
             
@@ -373,6 +376,240 @@ class TestDriveClient:
         
         # Verify the redirect URI constant is correct
         assert client.REDIRECT_URI == "http://localhost:8080/"
+
+    @patch('googleapiclient.discovery.build')
+    def test_get_file_bytes_regular_file(self, mock_build):
+        """Test getting bytes from a regular file."""
+        mock_service = Mock()
+        mock_files = Mock()
+        mock_get = Mock()
+        mock_get_media = Mock()
+        
+        mock_file_metadata = {
+            "id": "test-file-id",
+            "name": "test_file.pdf",
+            "mimeType": "application/pdf"
+        }
+        
+        mock_get.execute.return_value = mock_file_metadata
+        mock_files.get.return_value = mock_get
+        mock_files.get_media.return_value = mock_get_media
+        mock_service.files.return_value = mock_files
+        mock_build.return_value = mock_service
+        
+        # Mock the bytes response
+        expected_bytes = b"PDF file content here"
+        mock_get_media.execute.return_value = expected_bytes
+        
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        client.service = mock_service  # Set the service directly
+        result_bytes = client.get_file_bytes("test-file-id")
+        
+        assert result_bytes == expected_bytes
+        mock_files.get.assert_called_once_with(fileId="test-file-id")
+        mock_files.get_media.assert_called_once_with(fileId="test-file-id")
+        mock_get_media.execute.assert_called_once()
+
+
+
+
+
+    @patch('googleapiclient.discovery.build')
+    def test_get_file_bytes_regular_file(self, mock_build):
+        """Test getting bytes from a regular file."""
+        mock_service = Mock()
+        mock_files = Mock()
+        mock_get = Mock()
+        mock_get_media = Mock()
+        
+        mock_file_metadata = {
+            "id": "test-file-id",
+            "name": "test_file.pdf",
+            "mimeType": "application/pdf"
+        }
+        
+        mock_get.execute.return_value = mock_file_metadata
+        mock_files.get.return_value = mock_get
+        mock_files.get_media.return_value = mock_get_media
+        mock_service.files.return_value = mock_files
+        mock_build.return_value = mock_service
+        
+        # Mock the bytes response
+        expected_bytes = b"PDF file content here"
+        mock_get_media.execute.return_value = expected_bytes
+        
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        client.service = mock_service  # Set the service directly
+        result_bytes = client.get_file_bytes("test-file-id")
+        
+        assert result_bytes == expected_bytes
+        mock_files.get.assert_called_once_with(fileId="test-file-id")
+        mock_files.get_media.assert_called_once_with(fileId="test-file-id")
+        mock_get_media.execute.assert_called_once()
+
+    @patch('googleapiclient.discovery.build')
+    def test_get_file_bytes_google_doc(self, mock_build):
+        """Test getting bytes from a Google Doc (requires export)."""
+        mock_service = Mock()
+        mock_files = Mock()
+        mock_get = Mock()
+        mock_export_media = Mock()
+        
+        mock_file_metadata = {
+            "id": "test-doc-id",
+            "name": "Test Document",
+            "mimeType": "application/vnd.google-apps.document"
+        }
+        
+        mock_get.execute.return_value = mock_file_metadata
+        mock_files.get.return_value = mock_get
+        mock_files.export_media.return_value = mock_export_media
+        mock_service.files.return_value = mock_files
+        mock_build.return_value = mock_service
+        
+        # Mock the bytes response
+        expected_bytes = b"PDF content from Google Doc"
+        mock_export_media.execute.return_value = expected_bytes
+        
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        client.service = mock_service  # Set the service directly
+        result_bytes = client.get_file_bytes("test-doc-id")
+        
+        assert result_bytes == expected_bytes
+        mock_files.get.assert_called_once_with(fileId="test-doc-id")
+        mock_files.export_media.assert_called_once_with(
+            fileId="test-doc-id", 
+            mimeType="application/pdf"
+        )
+        mock_export_media.execute.assert_called_once()
+
+    @patch('googleapiclient.discovery.build')
+    def test_get_file_bytes_file_not_found(self, mock_build):
+        """Test getting bytes from a file that doesn't exist."""
+        mock_service = Mock()
+        mock_files = Mock()
+        mock_get = Mock()
+        
+        # Simulate 404 error
+        mock_get.execute.side_effect = HttpError(
+            resp=Mock(status=404),
+            content=b'{"error": {"message": "File not found"}}'
+        )
+        mock_files.get.return_value = mock_get
+        mock_service.files.return_value = mock_files
+        mock_build.return_value = mock_service
+        
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        client.service = mock_service  # Set the service directly
+        
+        with pytest.raises(FileNotFoundError, match="File with ID 'nonexistent-id' not found"):
+            client.get_file_bytes("nonexistent-id")
+
+    @patch('googleapiclient.discovery.build')
+    def test_get_file_bytes_api_error(self, mock_build):
+        """Test handling of API errors when getting file bytes."""
+        mock_service = Mock()
+        mock_files = Mock()
+        mock_get = Mock()
+        
+        # Simulate API error during metadata retrieval
+        mock_get.execute.side_effect = HttpError(
+            resp=Mock(status=403),
+            content=b'{"error": {"message": "Forbidden"}}'
+        )
+        mock_files.get.return_value = mock_get
+        mock_service.files.return_value = mock_files
+        mock_build.return_value = mock_service
+        
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        client.service = mock_service  # Set the service directly
+        
+        with pytest.raises(HttpError):
+            client.get_file_bytes("test-file-id")
+
+    def test_get_file_bytes_service_not_initialized(self):
+        """Test error when service is not initialized."""
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        # Don't set client.service
+        
+        with pytest.raises(Exception, match="Drive service not initialized"):
+            client.get_file_bytes("test-file-id")
+
+    def test_get_file_bytes_example_function(self):
+        """Test the standalone get_file_bytes_example function."""
+        with patch('universal_search.clients.drive_client.DriveClient') as mock_client_class:
+            mock_client = Mock()
+            mock_client_class.return_value = mock_client
+            
+            mock_credentials = {"web": {"client_id": "test"}}
+            expected_bytes = b"test file content"
+            
+            mock_client._load_credentials.return_value = mock_credentials
+            mock_client.authenticate.return_value = Mock()
+            mock_client.get_file_bytes.return_value = expected_bytes
+            
+            from universal_search.clients.drive_client import get_file_bytes_example
+            
+            # Should return the bytes
+            result_bytes = get_file_bytes_example("test-file-id")
+            
+            assert result_bytes == expected_bytes
+            mock_client.get_file_bytes.assert_called_once_with("test-file-id")
+
+    def test_get_file_bytes_example_function_error_handling(self):
+        """Test error handling in get_file_bytes_example function."""
+        with patch('universal_search.clients.drive_client.DriveClient') as mock_client_class:
+            mock_client = Mock()
+            mock_client_class.return_value = mock_client
+            
+            mock_client._load_credentials.side_effect = FileNotFoundError("Credentials not found")
+            
+            from universal_search.clients.drive_client import get_file_bytes_example
+            
+            # Should raise the exception
+            with pytest.raises(FileNotFoundError):
+                get_file_bytes_example("test-file-id")
+
+    def test_is_pdf_file_standard_pdf(self):
+        """Test is_pdf_file with standard PDF MIME type."""
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        
+        assert client.is_pdf_file("application/pdf") is True
+
+    def test_is_pdf_file_google_docs(self):
+        """Test is_pdf_file with Google Docs (exportable as PDF)."""
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        
+        assert client.is_pdf_file("application/vnd.google-apps.document") is True
+
+    def test_is_pdf_file_non_pdf_types(self):
+        """Test is_pdf_file with non-PDF MIME types."""
+        from universal_search.clients.drive_client import DriveClient
+        
+        client = DriveClient()
+        
+        assert client.is_pdf_file("text/plain") is False
+        assert client.is_pdf_file("image/jpeg") is False
+        assert client.is_pdf_file("application/vnd.google-apps.spreadsheet") is False
+        assert client.is_pdf_file("application/vnd.google-apps.presentation") is False
+        assert client.is_pdf_file(None) is False
+        assert client.is_pdf_file("") is False
 
 
 if __name__ == "__main__":

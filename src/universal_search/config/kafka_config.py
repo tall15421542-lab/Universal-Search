@@ -1,15 +1,18 @@
 """
-Configuration settings for Kafka producer and schema registry.
+Configuration settings for Kafka producer and consumer.
 """
 
 import os
 from typing import Dict, Any
 
-# Kafka Configuration
-# Default to localhost for local development, use kafka:9092 for Docker networking
-KAFKA_CONFIG = {
+# Common Kafka Configuration (shared between producer and consumer)
+KAFKA_COMMON_CONFIG = {
     'bootstrap.servers': os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
-    'client.id': 'drive-client-producer',
+    'request.timeout.ms': 30000,
+}
+
+# Producer-specific Configuration
+KAFKA_PRODUCER_CONFIG = {
     'acks': 'all',  # Wait for all replicas to acknowledge
     'retries': 3,
     'retry.backoff.ms': 1000,
@@ -17,45 +20,64 @@ KAFKA_CONFIG = {
     'linger.ms': 100,
     'compression.type': 'snappy',
     'enable.idempotence': True,
-    'request.timeout.ms': 30000,
     'delivery.timeout.ms': 120000,
 }
 
-# Schema Registry Configuration
-# Default to localhost for local development, use schema-registry:8081 for Docker networking
-SCHEMA_REGISTRY_CONFIG = {
-    'url': os.getenv('SCHEMA_REGISTRY_URL', 'http://localhost:8081'),
+# Consumer-specific Configuration
+KAFKA_CONSUMER_CONFIG = {
+    'auto.offset.reset': 'earliest',
+    'enable.auto.commit': True,
+    'auto.commit.interval.ms': 1000,
 }
 
 # Topic Configuration
 TOPIC_CONFIG = {
     'drive_files_topic': os.getenv('DRIVE_FILES_TOPIC', 'drive-files'),
-    'schema_name': 'DriveFile',
-    'schema_namespace': 'com.universalsearch.drive',
+    'parsed_files_topic': os.getenv('PARSED_FILES_TOPIC', 'drive-files-parsed'),
+    'chunks_topic': os.getenv('CHUNKS_TOPIC', 'drive-files-chunks'),
 }
 
-# Avro Serializer Configuration
-# Note: Cannot enable both 'use.latest.version' and 'auto.register.schemas' at the same time
-# - auto.register.schemas: True means schemas will be auto-registered if not present
-# - use.latest.version: False means we use the schema ID embedded in the message
-AVRO_SERIALIZER_CONFIG = {
-    'auto.register.schemas': True,
-    'normalize.schemas': True,
-}
-
-def get_producer_config() -> Dict[str, Any]:
+def get_producer_config(client_id: str) -> Dict[str, Any]:
     """
     Get the Kafka producer configuration.
     
-    Note: Schema Registry settings should NOT be included in the producer config.
-    They are used separately when initializing the SchemaRegistryClient and AvroSerializer.
+    Args:
+        client_id: Client ID to use for the Kafka producer.
     
     Returns:
         Dict containing the Kafka producer configuration.
     """
-    return KAFKA_CONFIG.copy()
+    config = KAFKA_COMMON_CONFIG.copy()
+    producer_config = KAFKA_PRODUCER_CONFIG.copy()
+    
+    # Set client.id from parameter
+    producer_config['client.id'] = client_id
+    
+    config.update(producer_config)
+    return config
 
-def get_topic_name() -> str:
+def get_consumer_config(client_id: str, group_id: str) -> Dict[str, Any]:
+    """
+    Get the Kafka consumer configuration.
+    
+    Args:
+        client_id: Client ID to use for the Kafka consumer.
+        group_id: Consumer group ID to use for the Kafka consumer.
+    
+    Returns:
+        Dict containing the consumer configuration.
+    """
+    config = KAFKA_COMMON_CONFIG.copy()
+    consumer_config = KAFKA_CONSUMER_CONFIG.copy()
+    
+    # Set client.id and group.id from parameters
+    consumer_config['client.id'] = client_id
+    consumer_config['group.id'] = group_id
+    
+    config.update(consumer_config)
+    return config
+
+def get_drive_files_topic() -> str:
     """
     Get the Kafka topic name for drive files.
     
@@ -64,38 +86,20 @@ def get_topic_name() -> str:
     """
     return TOPIC_CONFIG['drive_files_topic']
 
-def get_schema_name() -> str:
+def get_parsed_files_topic() -> str:
     """
-    Get the Avro schema name.
+    Get the Kafka topic name for parsed files.
     
     Returns:
-        String containing the schema name.
+        String containing the topic name.
     """
-    return TOPIC_CONFIG['schema_name']
+    return TOPIC_CONFIG['parsed_files_topic']
 
-def get_schema_namespace() -> str:
+def get_chunks_topic() -> str:
     """
-    Get the Avro schema namespace.
+    Get the Kafka topic name for file chunks.
     
     Returns:
-        String containing the schema namespace.
+        String containing the topic name.
     """
-    return TOPIC_CONFIG['schema_namespace']
-
-def get_schema_registry_config() -> Dict[str, Any]:
-    """
-    Get the Schema Registry client configuration.
-    
-    Returns:
-        Dict containing the Schema Registry configuration (only 'url' key).
-    """
-    return {'url': SCHEMA_REGISTRY_CONFIG['url']}
-
-def get_avro_serializer_config() -> Dict[str, Any]:
-    """
-    Get the Avro serializer configuration.
-    
-    Returns:
-        Dict containing the Avro serializer configuration.
-    """
-    return AVRO_SERIALIZER_CONFIG.copy()
+    return TOPIC_CONFIG['chunks_topic']

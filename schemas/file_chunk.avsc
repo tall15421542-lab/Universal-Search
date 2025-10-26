@@ -1,0 +1,52 @@
+{
+  "type": "record",
+  "name": "FileChunk",
+  "namespace": "com.universalsearch.drive",
+  "fields": [
+    {
+      "name": "fileId",
+      "type": "string",
+      "doc": "Unique identifier for the source Google Drive file"
+    },
+    {
+      "name": "fileName",
+      "type": "string",
+      "doc": "Name of the source file"
+    },
+    {
+      "name": "chunkId",
+      "type": "string",
+      "doc": "Unique identifier for this chunk"
+    },
+    {
+      "name": "chunkIndex",
+      "type": "int",
+      "doc": "Sequential position of this chunk (0, 1, 2...)"
+    },
+    {
+      "name": "chunkText",
+      "type": "string",
+      "doc": "Actual text content of this chunk"
+    },
+    {
+      "name": "startPosition",
+      "type": "int",
+      "doc": "Character offset where this chunk starts in the original text"
+    },
+    {
+      "name": "endPosition",
+      "type": "int",
+      "doc": "Character offset where this chunk ends in the original text"
+    },
+    {
+      "name": "chunkTimestamp",
+      "type": "string",
+      "doc": "ISO 8601 timestamp when chunking occurred"
+    },
+    {
+      "name": "totalChunks",
+      "type": "int",
+      "doc": "Total number of chunks for this file"
+    }
+  ]
+}

@@ -9,7 +9,7 @@ import pytest
 import json
 from unittest.mock import Mock, patch, mock_open
 from universal_search.producers.kafka_producer import DriveFileKafkaProducer
-from universal_search.config.kafka_config import get_topic_name
+from universal_search.config.kafka_config import get_drive_files_topic
 
 
 class TestDriveFileKafkaProducer:
@@ -56,7 +56,7 @@ class TestDriveFileKafkaProducer:
         producer = DriveFileKafkaProducer()
         
         # Verify initialization
-        assert producer.topic_name == get_topic_name()
+        assert producer.topic_name == get_drive_files_topic()
         assert producer.producer == mock_kafka_producer
         assert producer.schema_registry_client == mock_schema_client
         assert producer.avro_serializer == mock_avro_serializer
@@ -86,7 +86,7 @@ class TestDriveFileKafkaProducer:
         # Verify the produce call includes the file ID as key
         call_args = mock_producer.produce.call_args
         assert call_args[1]['key'] == b'test_file_123'  # File ID encoded as bytes
-        assert call_args[1]['topic'] == get_topic_name()
+        assert call_args[1]['topic'] == get_drive_files_topic()
         assert call_args[1]['value'] == b'serialized_data'
         
         # Verify that defaults were set on the original file_data
