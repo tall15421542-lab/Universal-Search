@@ -14,7 +14,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime
 from ..clients.drive_client import DriveClient
 from ..producers.kafka_producer import DriveFileKafkaProducer
-from ..config.kafka_config import get_topic_name
+from ..config.kafka_config import get_drive_files_topic
 
 
 class DriveStreamingJob:
@@ -101,7 +101,7 @@ class DriveStreamingJob:
             
             # Initialize Kafka producer
             self.logger.info("Initializing Kafka producer...")
-            self.kafka_producer = DriveFileKafkaProducer()
+            self.kafka_producer = DriveFileKafkaProducer(client_id='drive-streaming-producer')
             
             self.logger.info("Job initialization completed successfully")
             
